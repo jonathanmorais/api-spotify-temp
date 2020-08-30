@@ -58,6 +58,14 @@ type Coordinates struct {
 	Cod      int    `json:"cod"`
 }
 
+type Track struct {
+	Items []struct {
+		Track struct {
+			Name string `json:"name"`
+		} `json:"track"`
+	} `json:"items"`
+}
+
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.WriteHeader(http.StatusOK)
@@ -106,8 +114,36 @@ func ReceiveInfo(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("%.2f", ftc)
 
-    if ftc > 30 {
+	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/playlists/37i9dQZF1DXb1oSegSL8id/tracks?market=ES&fields=items(track(name(name)))&limit=10",nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer BQBk3QWuNpXkJXz-Jeidk1Da71-Pd1-Q2YCAQaRK8o_C3JVgcGSNmWjveychm6UPm77QXGSmC54_x6YeqZ0W1Ptgu2h4iNufbPwM5hS--AekGDMI9yP6KtFAEPEYwSiasYh5TY88-5MQBUO4n-dTAhFLLr0SxOYu-g22rZX5SUBmyXACWkB1pO_0cjyHPYI4mU71W7_K_uVlMw")
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var track map[string]interface{}
+
+	err = json.Unmarshal(body, &track)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if ftc > 30 {
     	log.Print("Party")
+		for _, val := range track {
+			party := val
+			log.Print(party)
+		}
 	} else if ftc > 15 && ftc < 30 {
 		log.Print("Chilli Beat")
 	} else if ftc > 10 && ftc < 24 {
