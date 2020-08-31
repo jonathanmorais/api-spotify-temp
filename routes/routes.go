@@ -82,7 +82,7 @@ func ReceiveInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%+v", info)
-    fmt.Print(info.City)
+    fmt.Print("%s\n", info.City)
 
 
 	resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + info.City + "&appid=b77e07f479efe92156376a8b07640ced")
@@ -103,7 +103,6 @@ func ReceiveInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	temper := coord.Main.Temp
-	fmt.Println(temper)
 
 	var ftc float64
 
@@ -112,25 +111,21 @@ func ReceiveInfo(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
-	fmt.Printf("%.2f", ftc)
+	log.Printf("%.2f", ftc)
 
-	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/playlists/37i9dQZF1DXb1oSegSL8id/tracks?market=ES&fields=items(track(name(name)))&limit=10",nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/playlists/2rN3mSrzUcgjlj1TcEDTX7/tracks?market=ES&fields=items(track(name(name)))&limit=1",nil)
+	if err != nil {log.Fatal(err)}
 
-	req.Header.Set("Authorization", "Bearer BQBk3QWuNpXkJXz-Jeidk1Da71-Pd1-Q2YCAQaRK8o_C3JVgcGSNmWjveychm6UPm77QXGSmC54_x6YeqZ0W1Ptgu2h4iNufbPwM5hS--AekGDMI9yP6KtFAEPEYwSiasYh5TY88-5MQBUO4n-dTAhFLLr0SxOYu-g22rZX5SUBmyXACWkB1pO_0cjyHPYI4mU71W7_K_uVlMw")
+	req.Header.Set("Authorization", "Bearer BQDHNMrIAJIH5StMvZoyIOpdB8X5liY4d2m_zKepBRmf_r7_9pdmyxKAg2fXHdT3tQ_MqNVCmUl6ckz8ckGDPlDoNabpP2i-xMU8Zt-NrnfLTtx0ZbjzjefASorrbukne9miAW-qLhDA058soiF6aYQlUCDWV1qgAryrVALnzC5ci7DQmntONbY9w1s48UhlsA-XX7R-24dbrg")
 	resp, err = http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
+	if err != nil {log.Fatal(err)}
 
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	var track map[string]interface{}
+	var track Track
 
 	err = json.Unmarshal(body, &track)
 	if err != nil {
@@ -140,12 +135,16 @@ func ReceiveInfo(w http.ResponseWriter, r *http.Request) {
 
 	if ftc > 30 {
     	log.Print("Party")
-		for _, val := range track {
-			party := val
+		for _, val := range track.Items {
+			party := val.Track.Name
 			log.Print(party)
 		}
 	} else if ftc > 15 && ftc < 30 {
 		log.Print("Chilli Beat")
+		for _, val := range track.Items {
+			party := val.Track.Name
+			fmt.Print(party)
+		}
 	} else if ftc > 10 && ftc < 24 {
 		log.Print("Rock")
 	} else if ftc <= 10 {
