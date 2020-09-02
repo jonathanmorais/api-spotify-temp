@@ -13,7 +13,7 @@ func main() {
    fmt.Print("hello")
    r := mux.NewRouter()
    r.HandleFunc("/", routes.HomeHandler).Methods("GET")
-   r.HandleFunc("/receive", routes.ReceiveInfo).Methods("POST")
+   r.HandleFunc("/receive", routes.ReceiveCoordinates).Methods("POST")
    http.Handle("/", r)
    log.Fatal(http.ListenAndServe(":8090", r))
 }

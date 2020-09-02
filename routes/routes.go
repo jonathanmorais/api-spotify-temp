@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
+	http "net/http"
 	"os"
+	"strconv"
 )
 
 type Info struct {
@@ -67,10 +68,10 @@ type Chilli struct {
 }
 
 type Playlist struct {
-	PartyId     string `json:"partyid"`
-	ChilliId    string `json:"chilliid"`
-	RockId      string `json:"rockid"`
-	ClassicalId string `json:"classicalid"`
+	PartyId     string
+	ChilliId    string
+	RockId      string
+	ClassicalId string
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +80,12 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func newPlaylist(PartyId, ChilliId, RockId, ClassicalId string ) *Playlist {
+func FloatToString(input_num float64) string {
+	// to convert a float number to a string
+	return strconv.FormatFloat(input_num, 'f', 6, 64)
+}
+
+func newPlaylist() (string, string, string, string) {
 	p := Playlist{
 		PartyId:     "37i9dQZF1DX8mBRYewE6or",
 		ChilliId:    "2rN3mSrzUcgjlj1TcEDTX7",
@@ -88,16 +94,15 @@ func newPlaylist(PartyId, ChilliId, RockId, ClassicalId string ) *Playlist {
 	}
 	log.Printf(p.PartyId)
 
-	return newPlaylist(PartyId, ChilliId, RockId, ClassicalId)
+	return p.PartyId, p.ChilliId, p.RockId, p.ClassicalId
 }
 
-func ReceiveCity(w http.ResponseWriter, r *http.Request) float64 {
+func ReceiveCoordinates(w http.ResponseWriter, r *http.Request) string {
 	var info Info
 
 	err := json.NewDecoder(r.Body).Decode(&info)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return 0
 	}
 
 	fmt.Fprintf(w, "%+v", info)
@@ -122,33 +127,33 @@ func ReceiveCity(w http.ResponseWriter, r *http.Request) float64 {
 
 	temper := coord.Main.Temp
 
-	var ftc float64
-
-	ftc = (temper - 273.15)
+	temp := (temper - 273.15)
 	if err != nil {
 		log.Print(err)
 	}
 
-	log.Printf("%.2f", ftc)
+     ftc := strconv.FormatFloat(temp, 'E', -1, 64)
+	 fmt.Printf("%T, %v\n", ftc, ftc)
 
 	return ftc
-
 }
 
-func GetTrack(w http.ResponseWriter, r *http.Request) {
+func GetTrack() Chilli {
 
-	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/playlists/2rN3mSrzUcgjlj1TcEDTX7/tracks?market=ES&fields=items(track(name(name)))&limit=1", nil)
+	party, _, _, _ := newPlaylist()
+
+	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/playlists/" + party + "/tracks?market=ES&fields=items(track(name(name)))&limit=1", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("Authorization", "Bearer BQBAP8qKdNDZeQc_vMf9iIqV-Mh68J6_DuH_WCf26rg-kAc78YosL0_W6z8HhtGnXS-JbcXwNb6AXz3sFMckX_4tawesbyb-9yz66y9N1uJDJDyi6WfWgKWLmlq9JuULrhpe6FoRQMn_RUfvoygpxaaajBdnBN3dCDoE9e6ZKs9X6BbAHIj0URFzwSpTUfHaKlw15J3yXVmoeA")
-	resp, err = http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -157,29 +162,37 @@ func GetTrack(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &track)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		log.Printf(err.Error())
 	}
+
+	return track
 }
 
-func SuggestionTrack() {
-	if ftc > 30 {
+func SuggestionTrack(w http.ResponseWriter, r *http.Request) {
+
+	ftc := ReceiveCoordinates(w, r)
+	f, err := strconv.ParseFloat(ftc, 64)
+	if err != nil{log.Println(err)}
+
+	track := GetTrack()
+
+	if f > 30 {
     	log.Print("Party")
 		for _, val := range track.Items {
 			party := val.Track.Name
 			log.Print(party)
 		}
-	} else if ftc > 15 && ftc < 30 {
+	} else if f > 15 && f < 30 {
 		log.Print("Chilli Beat")
 		for _, val := range track.Items {
 			chilli := val.Track.Name
 			fmt.Print(chilli)
 		}
-	} else if ftc > 10 && ftc < 24 {
+	} else if f > 10 && f < 24 {
 		log.Print("Rock")
-	} else if ftc <= 10 {
+	} else if f <= 10 {
 		log.Print("Classical Music")
 	}
 
-	return 0
+	return
 }
