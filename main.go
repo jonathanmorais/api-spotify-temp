@@ -14,6 +14,7 @@ func main() {
    r := mux.NewRouter()
    r.HandleFunc("/", routes.HomeHandler).Methods("GET")
    r.HandleFunc("/receive", routes.ReceiveCoordinates).Methods("POST")
+   r.HandleFunc("/suggestion", routes.SuggestionTrack).Methods("GET")
    http.Handle("/", r)
    log.Fatal(http.ListenAndServe(":8090", r))
 }

@@ -97,7 +97,7 @@ func newPlaylist() (string, string, string, string) {
 	return p.PartyId, p.ChilliId, p.RockId, p.ClassicalId
 }
 
-func ReceiveCoordinates(w http.ResponseWriter, r *http.Request) string {
+func ReceiveCoordinates(w http.ResponseWriter, r *http.Request) {
 	var info Info
 
 	err := json.NewDecoder(r.Body).Decode(&info)
@@ -124,18 +124,7 @@ func ReceiveCoordinates(w http.ResponseWriter, r *http.Request) string {
 		fmt.Println(err)
 		os.Exit(0)
 	}
-
-	temper := coord.Main.Temp
-
-	temp := (temper - 273.15)
-	if err != nil {
-		log.Print(err)
-	}
-
-     ftc := strconv.FormatFloat(temp, 'E', -1, 64)
-	 fmt.Printf("%T, %v\n", ftc, ftc)
-
-	return ftc
+	return
 }
 
 func GetTrack() Chilli {
@@ -147,7 +136,7 @@ func GetTrack() Chilli {
 		log.Fatal(err)
 	}
 
-	req.Header.Set("Authorization", "Bearer BQBAP8qKdNDZeQc_vMf9iIqV-Mh68J6_DuH_WCf26rg-kAc78YosL0_W6z8HhtGnXS-JbcXwNb6AXz3sFMckX_4tawesbyb-9yz66y9N1uJDJDyi6WfWgKWLmlq9JuULrhpe6FoRQMn_RUfvoygpxaaajBdnBN3dCDoE9e6ZKs9X6BbAHIj0URFzwSpTUfHaKlw15J3yXVmoeA")
+	req.Header.Set("Authorization", "Bearer BQAj6xpszdT_vhCbDAvoZc80cWNPKOnMYZPce1vCARr1BnqgQq4pZxVuHip2sU3nN9SO8rRykivizkEYVMDM2xab0fYIyZlcvp4NCYckYPPqLoQPZl_Xu5thUj2GwLyF2ZeAjaCn0BGxLQTkiBoqb-TWaVBDtPDAl7DQUSzkd9a4MeyvqFaqmi-SOsKVJIVDtQV-8BLiq5ujsg")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -168,29 +157,29 @@ func GetTrack() Chilli {
 	return track
 }
 
-func SuggestionTrack(w http.ResponseWriter, r *http.Request) {
+func SuggestionTrack(c *Coordinates) {
 
-	ftc := ReceiveCoordinates(w, r)
-	f, err := strconv.ParseFloat(ftc, 64)
-	if err != nil{log.Println(err)}
+	temper := c.Main.Temp
+
+	ftc := (temper - 273.15)
 
 	track := GetTrack()
 
-	if f > 30 {
+	if ftc > 30 {
     	log.Print("Party")
 		for _, val := range track.Items {
 			party := val.Track.Name
 			log.Print(party)
 		}
-	} else if f > 15 && f < 30 {
+	} else if ftc > 15 && ftc < 30 {
 		log.Print("Chilli Beat")
 		for _, val := range track.Items {
 			chilli := val.Track.Name
 			fmt.Print(chilli)
 		}
-	} else if f > 10 && f < 24 {
+	} else if ftc > 10 && ftc < 24 {
 		log.Print("Rock")
-	} else if f <= 10 {
+	} else if ftc <= 10 {
 		log.Print("Classical Music")
 	}
 
